@@ -239,7 +239,15 @@ def resource_name(resource_path)
 end
 
 def pr_or_issue_link(resource)
-  github_url(resource.resource_path)
+  prefix = case resource.state
+           when 'MERGED'
+             '✅ '
+           when 'CLOSED'
+             '⚪ '
+           else
+             '🍊 '
+           end
+  "#{prefix}[#{resource.title} - #{resource_name(resource.repository.resource_path)}##{resource.number}](#{github_url(resource.resource_path)})"
 end
 
 def group_issue_comments_by_repository(nodes)
