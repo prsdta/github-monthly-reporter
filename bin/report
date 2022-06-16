@@ -186,6 +186,15 @@ IssueCommentsQuery = Client.parse <<~'GRAPHQL'
                   }
                 }
               }
+              projectNextItems(first: 50) {
+                nodes {
+                  project {
+                    title
+                    resourcePath
+                    url
+                  }
+                }
+              }
               resourcePath
               url
               number
@@ -239,11 +248,12 @@ end
 
 def group_issue_comments_by_project(nodes)
   nodes
-    .flat_map { |node| 
-      if node.issue.project_cards.nodes.empty? 
+    .flat_map { |node|
+      projects_nodes = node.issue.project_cards.nodes + node.issue.project_next_items.nodes
+      if projects_nodes.empty?
         [[[nil, 'No Project'], node]]
       else
-        node.issue.project_cards.nodes.map { |project_card| [[project_card.project.resource_path, project_card.project.name], node] }
+        projects_nodes.map { |project_card| [[project_card.project.resource_path, project_card.project.try(:name) || project_card.project.title], node] }
       end
     }
     .group_by { |pair| pair.first }.transform_values { |pairs| pairs.map(&:last).uniq { |node| node.issue.resource_path } }
